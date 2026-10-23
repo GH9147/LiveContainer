@@ -219,7 +219,8 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                         sourcesPresent = true
                     } label: {
                         Image(systemName: "link")
-                            .font(.system(size: 15, weight: .regular))
+                            .font(.system(size: 16, weight: .regular))
+                            .frame(width: 24, height: 24)
                     }
                     .accessibilityLabel("源")
                 }
@@ -235,8 +236,11 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                                     Task{ await startInstallFromUrl() }
                                 })
                             } label: {
-                                Label("add", systemImage: "plus")
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .regular))
+                                    .frame(width: 24, height: 24)
                             }
+                            .accessibilityLabel("add")
                             
                         } else {
                             ProgressView().progressViewStyle(.circular).padding(.horizontal, 8)

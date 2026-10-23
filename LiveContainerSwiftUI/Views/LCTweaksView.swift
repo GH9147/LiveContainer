@@ -151,15 +151,14 @@ struct LCTweakFolderView : View {
                 }
 
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .topBarLeading) {
                 if !isTweakSigning {
                     Button {
                         Task { await createNewFolder() }
                     } label: {
                         Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
+                            .font(.system(size: 17, weight: .regular))
                     }
-                } else {
-                    ProgressView().progressViewStyle(.circular)
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
@@ -174,8 +173,11 @@ struct LCTweakFolderView : View {
                             choosingTweak = true
                         }
                     } label: {
-                        Label("lc.tweakView.importTweak".loc, systemImage: "square.and.arrow.down")
+                        Label("lc.tweakView.importTweak".loc, systemImage: "puzzlepiece.extension")
+                            .font(.system(size: 17, weight: .regular))
                     }
+                } else {
+                    ProgressView().progressViewStyle(.circular)
                 }
             }
         }
