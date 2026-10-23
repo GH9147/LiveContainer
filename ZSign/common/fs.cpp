@@ -42,6 +42,7 @@ void* ZFile::MapFile(const char* path, size_t offset, size_t size, size_t* psize
 	}
 
 #else
+    refreshFile(path);
     int fd = open(path, ro ? O_RDONLY : O_RDWR);
     if (fd <= 0)
     {

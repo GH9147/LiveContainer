@@ -35,7 +35,6 @@ private:
 
 	bool GetCertSubjectCN(void* cert, string& strSubjectCN);
 	bool GetCertSubjectCN(const string& strCertData, string& strSubjectCN);
-    bool GetCertOU(void* pcert, string& strOU);
 
 public:
 	static bool		CMSError();

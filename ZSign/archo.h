@@ -54,5 +54,7 @@ public:
 	uint32_t		m_uFileType;
 	mach_header*	m_pHeader;
 	uint32_t		m_uHeaderSize;
-	uint64_t		m_uExecSegLimit;
+
+private:
+	static uint64_t s_uExecSegLimit;
 };

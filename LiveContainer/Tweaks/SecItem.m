@@ -72,7 +72,7 @@ OSStatus new_SecItemDelete(CFDictionaryRef query){
     queryCopy[(__bridge id)kSecAttrAccessGroup] = accessGroup;
     OSStatus status = orig_SecItemDelete((__bridge CFDictionaryRef)queryCopy);
     if(status == errSecParam) {
-        return orig_SecItemDelete(query);
+        return new_SecItemDelete(query);
     }
     
     return status;

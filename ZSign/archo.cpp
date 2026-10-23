@@ -3,6 +3,8 @@
 #include "archo.h"
 #include "signing.h"
 
+uint64_t ZArchO::s_uExecSegLimit = 0;
+
 ZArchO::ZArchO()
 {
 	m_pBase = NULL;
@@ -20,7 +22,6 @@ ZArchO::ZArchO()
 	m_pCodeSignSegment = NULL;
 	m_pLinkEditSegment = NULL;
 	m_uLoadCommandsFreeSpace = 0;
-	m_uExecSegLimit = 0;
 }
 
 bool ZArchO::Init(uint8_t* pBase, uint32_t uLength)
@@ -50,7 +51,7 @@ bool ZArchO::Init(uint8_t* pBase, uint32_t uLength)
 		{
 			segment_command* seglc = (segment_command*)pLoadCommand;
 			if (0 == strcmp("__TEXT", seglc->segname)) {
-				m_uExecSegLimit = seglc->vmsize;
+				s_uExecSegLimit = seglc->vmsize;
 				for (uint32_t j = 0; j < BO(seglc->nsects); j++) {
 					section* sect = (section*)((pLoadCommand + sizeof(segment_command)) + sizeof(section) * j);
 					if (0 == strcmp("__text", sect->sectname)) {
@@ -70,7 +71,7 @@ bool ZArchO::Init(uint8_t* pBase, uint32_t uLength)
 		{
 			segment_command_64* seglc = (segment_command_64*)pLoadCommand;
 			if (0 == strcmp("__TEXT", seglc->segname)) {
-				m_uExecSegLimit = seglc->vmsize;
+				s_uExecSegLimit = seglc->vmsize;
 				for (uint32_t j = 0; j < BO(seglc->nsects); j++) {
 					section_64* sect = (section_64*)((pLoadCommand + sizeof(segment_command_64)) + sizeof(section_64) * j);
 					if (0 == strcmp("__text", sect->sectname)) {
@@ -385,7 +386,7 @@ bool ZArchO::BuildCodeSignature(ZSignAsset* pSignAsset,
 			m_uCodeLength,
 			pCodeSlots1Data,
 			uCodeSlots1DataLength,
-			m_uExecSegLimit,
+			s_uExecSegLimit,
 			uExecSegFlags,
 			strBundleId,
 			pSignAsset->m_strTeamId,
@@ -404,7 +405,7 @@ bool ZArchO::BuildCodeSignature(ZSignAsset* pSignAsset,
 		m_uCodeLength,
 		pCodeSlots256Data,
 		uCodeSlots256DataLength,
-		m_uExecSegLimit,
+		s_uExecSegLimit,
 		uExecSegFlags,
 		strBundleId,
 		pSignAsset->m_strTeamId,

@@ -34,28 +34,6 @@ static NSString *loadTweakAtURL(NSURL *url) {
     }
 }
 
-static void loadTweaksRecursively(NSURL *folderURL, NSMutableArray *errors) {
-    NSArray<NSURL *> *items = [NSFileManager.defaultManager contentsOfDirectoryAtURL:folderURL includingPropertiesForKeys:@[NSURLIsDirectoryKey] options:0 error:nil];
-    for (NSURL *fileURL in items) {
-        NSString *name = fileURL.lastPathComponent;
-        if ([name hasSuffix:@".disabled"]) {
-            NSLog(@"Skipping disabled tweak %@", name);
-            continue;
-        }
-        NSNumber *isDirectory = nil;
-        [fileURL getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:nil];
-        // a .framework is a directory but loads as a single tweak
-        if (isDirectory.boolValue && ![name hasSuffix:@".framework"]) {
-            loadTweaksRecursively(fileURL, errors);
-        } else {
-            NSString *error = loadTweakAtURL(fileURL);
-            if (error) {
-                [errors addObject:error];
-            }
-        }
-    }
-}
-
 static void showDlerrAlert(NSString *error) {
     UIWindow *window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Failed to load tweaks" message:error preferredStyle:UIAlertControllerStyleAlert];
@@ -118,13 +96,8 @@ static void TweakLoaderConstructor() {
     NSLog(@"Loading tweaks from the global folder");
 
     for (NSURL *fileURL in globalTweaks) {
-        NSString *name = fileURL.lastPathComponent;
-        if ([name isEqualToString:@"TweakLoader.dylib"]) {
+        if ([fileURL.lastPathComponent isEqualToString:@"TweakLoader.dylib"]) {
             // skip loading myself
-            continue;
-        }
-        if ([name hasSuffix:@".disabled"]) {
-            NSLog(@"Skipping disabled global tweak %@", name);
             continue;
         }
         NSString *error = loadTweakAtURL(fileURL);
@@ -137,7 +110,17 @@ static void TweakLoaderConstructor() {
     if (tweakFolderName.length > 0) {
         NSLog(@"Loading tweaks from the selected folder");
         NSString *tweakFolder = [globalTweakFolder stringByAppendingPathComponent:tweakFolderName];
-        loadTweaksRecursively([NSURL fileURLWithPath:tweakFolder], errors);
+        NSURL *tweakFolderURL = [NSURL fileURLWithPath:tweakFolder];
+        NSDirectoryEnumerator *directoryEnumerator = [NSFileManager.defaultManager enumeratorAtURL:tweakFolderURL includingPropertiesForKeys:@[] options:0 errorHandler:^BOOL(NSURL *url, NSError *error) {
+            NSLog(@"Error while enumerating tweak directory: %@", error);
+            return YES;
+        }];
+        for (NSURL *fileURL in directoryEnumerator) {
+            NSString *error = loadTweakAtURL(fileURL);
+            if (error) {
+                [errors addObject:error];
+            }
+        }
     }
 
     if (errors.count > 0) {
