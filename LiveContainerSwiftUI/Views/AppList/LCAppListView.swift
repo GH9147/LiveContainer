@@ -9,27 +9,6 @@ import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
-class SearchContext: ObservableObject {
-    @Published var query: String = ""
-    @Published var debouncedQuery: String = ""
-    @Published var isTyping: Bool = false
-
-    private var cancellables = Set<AnyCancellable>()
-
-    init() {
-        $query
-            .debounce(for: .seconds(0.2), scheduler: DispatchQueue.main)
-            .sink { [weak self] value in
-                self?.isTyping = true
-                self?.debouncedQuery = value
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    self?.isTyping = false
-                }
-            }
-            .store(in: &cancellables)
-    }
-}
-
 struct AppReplaceOption : Hashable {
     var isReplace: Bool
     var nameOfFolderToInstall: String
@@ -78,17 +57,14 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
     
     @State private var customSortViewPresent = false
     @State private var sourcesPresent = false
-    @StateObject private var sourcesSearchContext = SearchContext()
     
     @EnvironmentObject private var sharedModel : SharedModel
     @EnvironmentObject private var sharedAppSortManager : LCAppSortManager
     
-    @AppStorage("LCMultitaskMode", store: LCUtils.appGroupUserDefault) var multitaskMode: MultitaskMode = .virtualWindow
     @AppStorage("darkModeIcon", store: LCUtils.appGroupUserDefault) private var darkModeIcon = false
     
     @State private var isViewAppeared = false
     
-    @ObservedObject var searchContext: SearchContext
     var sortedApps: [LCAppModel] {
         return sharedAppSortManager.sortedApps
     }
@@ -98,34 +74,17 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
     }
     
     var filteredApps: [LCAppModel] {
-        let apps = sortedApps
-        if searchContext.debouncedQuery.isEmpty {
-            return apps
-        } else {
-            return apps.filter { app in
-                app.appInfo.displayName().localizedCaseInsensitiveContains(searchContext.debouncedQuery) ||
-                app.appInfo.bundleIdentifier()!.localizedCaseInsensitiveContains(searchContext.debouncedQuery)
-            }
-        }
+        return sortedApps
     }
     
     var filteredHiddenApps: [LCAppModel] {
-        let apps = sortedHiddenApps
-        if searchContext.debouncedQuery.isEmpty || !sharedModel.isHiddenAppUnlocked {
-            return apps
-        } else {
-            return apps.filter { app in
-                app.appInfo.displayName().localizedCaseInsensitiveContains(searchContext.debouncedQuery) ||
-                app.appInfo.bundleIdentifier()!.localizedCaseInsensitiveContains(searchContext.debouncedQuery)
-            }
-        }
+        return sortedHiddenApps
     }
     
-    init(appDataFolderNames: Binding<[String]>, tweakFolderNames: Binding<[String]>, searchContext: SearchContext) {
+    init(appDataFolderNames: Binding<[String]>, tweakFolderNames: Binding<[String]>) {
         _installOptions = State(initialValue: [])
         _appDataFolderNames = appDataFolderNames
         _tweakFolderNames = tweakFolderNames
-        self.searchContext = searchContext
     }
     
     var body: some View {
@@ -146,7 +105,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                     .transition(.scale)
                 }
                 .padding()
-                .animation(searchContext.isTyping ? nil : .easeInOut, value: filteredApps)
+                .animation(.easeInOut, value: filteredApps)
 
                 VStack {
                     if LCUtils.appGroupUserDefault.bool(forKey: "LCStrictHiding") {
@@ -166,7 +125,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                             }
                             .padding()
                             .transition(.opacity)
-                            .animation(searchContext.isTyping ? nil : .easeInOut, value: filteredHiddenApps)
+                            .animation(.easeInOut, value: filteredHiddenApps)
                             
                             if sharedModel.hiddenApps.count == 0 {
                                 Text("lc.appList.hideAppTip".loc)
@@ -193,18 +152,18 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                             }
                         }
                         .padding()
-                        .animation(searchContext.isTyping ? nil : .easeInOut, value: filteredHiddenApps)
+                        .animation(.easeInOut, value: filteredHiddenApps)
                     }
 
                     let appCount = sharedModel.isHiddenAppUnlocked ? filteredApps.count + filteredHiddenApps.count : filteredApps.count
-                    Text(appCount > 0 || searchContext.debouncedQuery != "" ? "lc.appList.appCounter %lld".localizeWithFormat(appCount) : (sharedModel.multiLCStatus == 2 ? "lc.appList.convertToSharedToShowInLC2".loc : "lc.appList.installTip".loc))
+                    Text(appCount > 0 ? "lc.appList.appCounter %lld".localizeWithFormat(appCount) : (sharedModel.multiLCStatus == 2 ? "lc.appList.convertToSharedToShowInLC2".loc : "lc.appList.installTip".loc))
                         .padding(.horizontal)
                         .foregroundStyle(.gray)
-                        .animation(searchContext.isTyping ? nil : .easeInOut, value: appCount)
+                        .animation(.easeInOut, value: appCount)
                         .onTapGesture(count: 3) {
                             Task { await authenticateUser() }
                         }
-                }.animation(searchContext.isTyping ? nil : .easeInOut, value: LCUtils.appGroupUserDefault.bool(forKey: "LCStrictHiding"))
+                }.animation(.easeInOut, value: LCUtils.appGroupUserDefault.bool(forKey: "LCStrictHiding"))
 
                 if sharedModel.multiLCStatus == 2 {
                     Text("lc.appList.manageInPrimaryTip".loc).foregroundStyle(.gray).padding()
@@ -222,9 +181,13 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
             .navigationTitle("lc.appList.myApps".loc)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("源", systemImage: "link", action: {
+                    Button {
                         sourcesPresent = true
-                    })
+                    } label: {
+                        Image(systemName: "link")
+                            .font(.system(size: 13))
+                    }
+                    .accessibilityLabel("源")
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     if sharedModel.multiLCStatus != 2 {
@@ -403,7 +366,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
             LCCustomSortView()
         }
         .sheet(isPresented: $sourcesPresent) {
-            LCSourcesView(searchContext: sourcesSearchContext)
+            LCSourcesView()
         }
         .onAppear() {
             if !isViewAppeared {
@@ -426,13 +389,6 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.InstallAppNotification)) { obj in
             if let obj2 = obj.object as? [String: Any], let installUrl = obj2["url"] as? URL {
                 Task { await installFromUrl(urlStr: installUrl.absoluteString) }
-            }
-        }
-        .apply {
-            if #available(iOS 19.0, *), SharedModel.isLiquidGlassSearchEnabled {
-                $0
-            } else {
-                $0.searchable(text: $searchContext.query)
             }
         }
 

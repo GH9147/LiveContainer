@@ -16,7 +16,6 @@ struct LCTabView: View {
     @State var crashReportShow = false
     @State var errorInfo = ""
     
-    @State var previousSelectedTab : LCTabIdentifier = .apps
     
     @EnvironmentObject var sharedModel : SharedModel
     @EnvironmentObject var sceneDelegate: SceneDelegate
@@ -24,17 +23,11 @@ struct LCTabView: View {
     @Environment(\.scenePhase) var scenePhase
     @StateObject var downloadHelper = DownloadHelper()
     
-    @StateObject var searchContextAppList = SearchContext()
-    @StateObject var searchContextSource = SearchContext()
     
     let pub = NotificationCenter.default.publisher(for: UIScene.didDisconnectNotification)
     
     private var appListView: LCAppListView {
-        LCAppListView(appDataFolderNames: $appDataFolderNames, tweakFolderNames: $tweakFolderNames, searchContext: searchContextAppList)
-    }
-    
-    private var sourcesView: LCSourcesView {
-        LCSourcesView(searchContext: searchContextSource)
+        LCAppListView(appDataFolderNames: $appDataFolderNames, tweakFolderNames: $tweakFolderNames)
     }
 
     
@@ -52,16 +45,6 @@ struct LCTabView: View {
                     }
                     Tab("lc.tabView.settings".loc, systemImage: "gearshape.fill", value: LCTabIdentifier.settings) {
                         LCSettingsView(appDataFolderNames: $appDataFolderNames)
-                    }
-                    Tab("Search".loc, systemImage: "magnifyingglass", value: LCTabIdentifier.search, role: .search) {
-                        if previousSelectedTab == .sources {
-                            sourcesView
-                                .searchable(text: $searchContextSource.query)
-                        } else {
-                            appListView
-                                .searchable(text: $searchContextAppList.query)
-                        }
-
                     }
                 }
             } else {
@@ -137,11 +120,6 @@ struct LCTabView: View {
                 if shouldToggleMainWindowOpen {
                     DataManager.shared.model.mainWindowOpened = false
                 }
-            }
-        }
-        .onChange(of: sharedModel.selectedTab) { newValue in
-            if newValue != LCTabIdentifier.search {
-                previousSelectedTab = newValue
             }
         }
         .onOpenURL { url in

@@ -484,7 +484,6 @@ struct LCSourcesView: View {
     @StateObject private var viewModel = AltStoreSourcesViewModel()
     @State private var errorMessage: String?
     @State private var sourcePendingRemoval: AltStoreSourcesViewModel.SourceItem?
-    @ObservedObject public var searchContext: SearchContext
     @State private var expandedSources: Set<URL> = []
     @State private var isManagingSources = false
     
@@ -514,7 +513,7 @@ struct LCSourcesView: View {
                                 AltStoreSourceSectionView(
                                     item: item,
                                     filteredApps: apps,
-                                    isFiltering: isFiltering,
+                                    isFiltering: false,
                                     isExpanded: expandedSources.contains(item.id),
                                     onRefresh: { Task { await viewModel.refreshSource(item) } },
                                     onInstall: install(app:),
@@ -546,9 +545,13 @@ struct LCSourcesView: View {
                     if viewModel.isRefreshingAll {
                         ProgressView()
                     } else {
-                        Button("lc.sources.refreshAll".loc, systemImage: "arrow.clockwise") {
+                        Button {
                             Task { await viewModel.refreshAllSources() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 13))
                         }
+                        .accessibilityLabel("lc.sources.refreshAll".loc)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -607,13 +610,6 @@ struct LCSourcesView: View {
                 )
             }
         }
-        .apply {
-            if #available(iOS 19.0, *), SharedModel.isLiquidGlassSearchEnabled {
-                $0
-            } else {
-                $0.searchable(text: $searchContext.query)
-            }
-        }
         .onAppear {
             expandedSources = []
             if !isViewAppeared {
@@ -635,7 +631,7 @@ struct LCSourcesView: View {
     }
     
     private var isFiltering: Bool {
-        !searchContext.debouncedQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        false
     }
     
     private var totalFilteredAppCount: Int {
@@ -645,27 +641,7 @@ struct LCSourcesView: View {
     }
     
     private func filteredApps(for item: AltStoreSourcesViewModel.SourceItem) -> [AltStoreSourceApp] {
-        guard let source = item.source else { return [] }
-        let query = searchContext.debouncedQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else {
-            return source.apps
-        }
-        return source.apps.filter { app in
-            let lower = query.lowercased()
-            if app.name.lowercased().contains(lower) {
-                return true
-            }
-            if app.bundleIdentifier.lowercased().contains(lower) {
-                return true
-            }
-            if let developer = app.developerName?.lowercased(), developer.contains(lower) {
-                return true
-            }
-            if let subtitle = app.subtitle?.lowercased(), subtitle.contains(lower) {
-                return true
-            }
-            return false
-        }
+        return item.source?.apps ?? []
     }
     
     @MainActor

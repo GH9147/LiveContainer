@@ -38,6 +38,7 @@ struct LCTweakFolderView : View {
     @StateObject private var renameFileInput = InputHelper()
     
     @State private var choosingTweak = false
+    @State private var hasCertificate = false
     
     @State private var isTweakSigning = false
     
@@ -143,42 +144,39 @@ struct LCTweakFolderView : View {
         .navigationTitle(isRoot ? "lc.tabView.tweaks".loc : baseUrl.lastPathComponent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if !isTweakSigning && LCSharedUtils.certificatePassword() != nil {
+                if hasCertificate {
                     Button {
                         Task { await signAllTweaks() }
                     } label: {
-                        Label("sign".loc, systemImage: "signature")
+                        Image(systemName: "signature")
                     }
+                    .disabled(isTweakSigning)
+                    .opacity(isTweakSigning ? 0.35 : 1)
                 }
-
             }
             ToolbarItem(placement: .topBarLeading) {
-                if !isTweakSigning {
-                    Button {
-                        if choosingTweak {
-                            choosingTweak = false
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                                choosingTweak = true
-                            })
-                        } else {
-                            choosingTweak = true
-                        }
-                    } label: {
-                        Label("lc.tweakView.importTweak".loc, systemImage: "puzzlepiece.extension")
-                    }
-                } else {
-                    ProgressView().progressViewStyle(.circular)
+                Button {
+                    choosingTweak = true
+                } label: {
+                    Image(systemName: "puzzlepiece.extension")
                 }
+                .accessibilityLabel("lc.tweakView.importTweak".loc)
+                .disabled(isTweakSigning)
+                .opacity(isTweakSigning ? 0.35 : 1)
             }
             ToolbarItem(placement: .topBarTrailing) {
-                if !isTweakSigning {
-                    Button {
-                        Task { await createNewFolder() }
-                    } label: {
-                        Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
-                    }
+                Button {
+                    Task { await createNewFolder() }
+                } label: {
+                    Image(systemName: "folder.badge.plus")
                 }
+                .accessibilityLabel("lc.tweakView.newFolder".loc)
+                .disabled(isTweakSigning)
+                .opacity(isTweakSigning ? 0.35 : 1)
             }
+        }
+        .onAppear {
+            hasCertificate = LCSharedUtils.certificatePassword() != nil
         }
         .alert("lc.common.error".loc, isPresented: $errorShow) {
             Button("lc.common.ok".loc, action: {
