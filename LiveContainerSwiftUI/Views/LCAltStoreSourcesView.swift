@@ -546,15 +546,27 @@ struct LCSourcesView: View {
                     if viewModel.isRefreshingAll {
                         ProgressView()
                     } else {
-                        Button("lc.sources.refreshAll".loc, systemImage: "arrow.clockwise") {
+                        Button {
                             Task { await viewModel.refreshAllSources() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 15, weight: .regular))
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
                         }
+                        .accessibilityLabel("lc.sources.refreshAll".loc)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("lc.sources.addSource".loc, systemImage: "plus") {
+                    Button {
                         isManagingSources = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 15, weight: .regular))
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("lc.sources.addSource".loc)
                 }
             }
         }

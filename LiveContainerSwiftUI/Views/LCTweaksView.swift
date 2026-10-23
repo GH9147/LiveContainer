@@ -154,16 +154,6 @@ struct LCTweakFolderView : View {
             ToolbarItem(placement: .topBarLeading) {
                 if !isTweakSigning {
                     Button {
-                        Task { await createNewFolder() }
-                    } label: {
-                        Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
-                            .font(.system(size: 17, weight: .regular))
-                    }
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                if !isTweakSigning {
-                    Button {
                         if choosingTweak {
                             choosingTweak = false
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
@@ -178,6 +168,16 @@ struct LCTweakFolderView : View {
                     }
                 } else {
                     ProgressView().progressViewStyle(.circular)
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if !isTweakSigning {
+                    Button {
+                        Task { await createNewFolder() }
+                    } label: {
+                        Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
+                            .font(.system(size: 17, weight: .regular))
+                    }
                 }
             }
         }

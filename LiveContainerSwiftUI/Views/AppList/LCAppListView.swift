@@ -215,78 +215,87 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
             .navigationTitle("lc.appList.myApps".loc)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        sourcesPresent = true
-                    } label: {
-                        Image(systemName: "link")
-                            .font(.system(size: 16, weight: .regular))
-                            .frame(width: 24, height: 24)
-                    }
-                    .accessibilityLabel("源")
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    if sharedModel.multiLCStatus != 2 {
-                        if !installprogressVisible {
-                            Menu {
-                                
-                                Button("lc.appList.installFromIpa".loc, systemImage: "doc.badge.plus", action: {
-                                    choosingIPA = true
-                                })
-                                Button("lc.appList.installFromUrl".loc, systemImage: "link.badge.plus", action: {
-                                    Task{ await startInstallFromUrl() }
-                                })
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 16, weight: .regular))
-                                    .frame(width: 24, height: 24)
-                            }
-                            .accessibilityLabel("add")
-                            
-                        } else {
-                            ProgressView().progressViewStyle(.circular).padding(.horizontal, 8)
-                        }
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if(UserDefaults.sideStoreExist()) {
+                    HStack(spacing: 14) {
                         Button {
-                            LCUtils.openSideStore(delegate: self)
+                            sourcesPresent = true
                         } label: {
-                            IconImageView(icon: BuiltInSideStoreAppInfo.shared.iconIsDarkIcon(darkModeIcon))
-                                .frame(width: UIFont.preferredFont(forTextStyle: .body).lineHeight, height: UIFont.preferredFont(forTextStyle: .body).lineHeight)
-
+                            Image(systemName: "link")
+                                .font(.system(size: 15, weight: .regular))
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
                         }
-                    } else {
-                        Button("Help", systemImage: "questionmark") {
-                            helpPresent = true
+                        .accessibilityLabel("源")
+                        if sharedModel.multiLCStatus != 2 {
+                            if !installprogressVisible {
+                                Menu {
+                                    Button("lc.appList.installFromIpa".loc, systemImage: "doc.badge.plus", action: {
+                                        choosingIPA = true
+                                    })
+                                    Button("lc.appList.installFromUrl".loc, systemImage: "link.badge.plus", action: {
+                                        Task{ await startInstallFromUrl() }
+                                    })
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 15, weight: .regular))
+                                        .frame(width: 28, height: 28)
+                                        .contentShape(Rectangle())
+                                }
+                                .accessibilityLabel("add")
+                            } else {
+                                ProgressView().progressViewStyle(.circular)
+                            }
                         }
                     }
                 }
-                
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Picker("Sort by", selection: $sharedAppSortManager.appSortType) {
-                            ForEach(AppSortType.allCases, id: \.self) { sortType in
-                                Label(sortType.displayName, systemImage: sortType.systemImage)
-                                    .tag(sortType)
-                            }
-                        }
-                        .onChange(of: sharedAppSortManager.appSortType) { newValue in
-                            if sharedAppSortManager.appSortType == .custom {
-                                customSortViewPresent = true
-                            }
-                        }
-                        if sharedAppSortManager.appSortType == .custom {
-                            Divider()
-                            
+                    HStack(spacing: 14) {
+                        if(UserDefaults.sideStoreExist()) {
                             Button {
-                                customSortViewPresent = true
+                                LCUtils.openSideStore(delegate: self)
                             } label: {
-                                Label("lc.appList.sort.customManage".loc, systemImage: "slider.horizontal.3")
+                                IconImageView(icon: BuiltInSideStoreAppInfo.shared.iconIsDarkIcon(darkModeIcon))
+                                    .frame(width: 28, height: 28)
+                                    .contentShape(Rectangle())
                             }
+                        } else {
+                            Button {
+                                helpPresent = true
+                            } label: {
+                                Image(systemName: "questionmark")
+                                    .font(.system(size: 15, weight: .regular))
+                                    .frame(width: 28, height: 28)
+                                    .contentShape(Rectangle())
+                            }
+                            .accessibilityLabel("Help")
                         }
-                    } label: {
-                        Label("Sort by", systemImage: "line.3.horizontal.decrease.circle")
+                        Menu {
+                            Picker("Sort by", selection: $sharedAppSortManager.appSortType) {
+                                ForEach(AppSortType.allCases, id: \.self) { sortType in
+                                    Label(sortType.displayName, systemImage: sortType.systemImage)
+                                        .tag(sortType)
+                                }
+                            }
+                            .onChange(of: sharedAppSortManager.appSortType) { newValue in
+                                if sharedAppSortManager.appSortType == .custom {
+                                    customSortViewPresent = true
+                                }
+                            }
+                            if sharedAppSortManager.appSortType == .custom {
+                                Divider()
+                                
+                                Button {
+                                    customSortViewPresent = true
+                                } label: {
+                                    Label("lc.appList.sort.customManage".loc, systemImage: "slider.horizontal.3")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                                .font(.system(size: 15, weight: .regular))
+                                .frame(width: 28, height: 28)
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Sort by")
                     }
                 }
             }
