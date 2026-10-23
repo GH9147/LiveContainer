@@ -23,11 +23,6 @@ struct LCTabView: View {
     
     var body: some View {
         TabView(selection: $sharedModel.selectedTab) {
-            LCAppListView()
-                .tabItem {
-                    Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill")
-                }
-                .tag(LCTabIdentifier.apps)
             if DataManager.shared.model.multiLCStatus != 2 {
                 LCTweaksView()
                     .tabItem{
@@ -35,6 +30,11 @@ struct LCTabView: View {
                     }
                     .tag(LCTabIdentifier.tweaks)
             }
+            LCAppListView()
+                .tabItem {
+                    Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill")
+                }
+                .tag(LCTabIdentifier.apps)
             
             LCSettingsView()
                 .tabItem {

@@ -71,6 +71,9 @@ struct LCSettingsView: View {
     @EnvironmentObject private var sharedModel : SharedModel
     
     @State private var isViewAppeared = false
+    @State private var updateAlertShow = false
+    @State private var updateInfo = ""
+    @State private var isCheckingUpdate = false
     
     let storeName = LCUtils.getStoreName()
     
@@ -281,32 +284,24 @@ struct LCSettingsView: View {
                     } label: {
                         Text("lc.settings.dataManagement".loc)
                     }
+                    Button {
+                        Task { await checkForUpdates() }
+                    } label: {
+                        HStack {
+                            Text("检测更新")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if isCheckingUpdate {
+                                ProgressView()
+                            } else {
+                                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .disabled(isCheckingUpdate)
                 }
                 
-                Section {
-                    HStack {
-                        Image("GitHub")
-                        Button("LiveContainer/LiveContainer") {
-                            openGitHub()
-                        }
-                    }
-                    HStack {
-                        Image("Twitter")
-                        Button("khanhduytran0") {
-                            openTwitter()
-                        }
-                    }
-                    HStack {
-                        Image("GitHub")
-                        Button("Huge_Black") {
-                            openGitHub2()
-                        }
-                    }
-                } header: {
-                    Text("lc.settings.about".loc)
-                } footer: {
-                    Text("lc.settings.warning".loc)
-                }
                 
                 VStack{
                     Text(LCUtils.getVersionInfo())
@@ -386,6 +381,10 @@ struct LCSettingsView: View {
             } message: {
                 Text(successInfo)
             }
+            .alert("检测更新", isPresented: $updateAlertShow){
+            } message: {
+                Text(updateInfo)
+            }
             .alert("lc.settings.importCertificate".loc, isPresented: $certificateImportAlert.show) {
                 Button {
                     certificateImportAlert.close(result: true)
@@ -459,6 +458,54 @@ struct LCSettingsView: View {
         }
     }
     
+    func compareVersion(_ a: String, _ b: String) -> Int {
+        let pa = a.split(separator: ".").map { Int($0) ?? 0 }
+        let pb = b.split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(pa.count, pb.count) {
+            let x = i < pa.count ? pa[i] : 0
+            let y = i < pb.count ? pb[i] : 0
+            if x != y { return x > y ? 1 : -1 }
+        }
+        return 0
+    }
+    
+    func checkForUpdates() async {
+        isCheckingUpdate = true
+        defer { isCheckingUpdate = false }
+        let localVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        guard let url = URL(string: "https://github.com/LiveContainer/LiveContainer/releases/download/nightly/apps_nightly.json") else {
+            updateInfo = "更新地址无效"
+            updateAlertShow = true
+            return
+        }
+        do {
+            var req = URLRequest(url: url)
+            req.timeoutInterval = 20
+            req.cachePolicy = .reloadIgnoringLocalCacheData
+            let (data, _) = try await URLSession.shared.data(for: req)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let apps = json["apps"] as? [[String: Any]] else {
+                updateInfo = "更新数据格式无法解析"
+                updateAlertShow = true
+                return
+            }
+            let mine = apps.first { ($0["bundleIdentifier"] as? String) == Bundle.main.bundleIdentifier }
+            let remoteVer = (mine?["version"] as? String) ?? ""
+            let remoteDate = (mine?["versionDate"] as? String) ?? ""
+            if remoteVer.isEmpty {
+                updateInfo = "更新源里没有找到 LiveContainer"
+            } else if compareVersion(remoteVer, localVer) > 0 {
+                updateInfo = "发现新版本 \(remoteVer)\n当前版本 \(localVer)\n发布：\(remoteDate)\n\n需要重新构建才能用上这个版本。"
+            } else {
+                updateInfo = "已是最新版本\n当前 \(localVer)，官方 \(remoteVer)"
+            }
+        } catch {
+            updateInfo = "检查失败：\(error.localizedDescription)"
+        }
+        updateAlertShow = true
+    }
+    
+
     func openGitHub() {
         UIApplication.shared.open(URL(string: "https://github.com/LiveContainer/LiveContainer")!)
     }
