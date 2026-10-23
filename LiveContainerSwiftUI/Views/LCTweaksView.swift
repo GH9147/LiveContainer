@@ -38,7 +38,6 @@ struct LCTweakFolderView : View {
     @StateObject private var renameFileInput = InputHelper()
     
     @State private var choosingTweak = false
-    @State private var hasCertificate = false
     
     @State private var isTweakSigning = false
     
@@ -143,40 +142,48 @@ struct LCTweakFolderView : View {
         }
         .navigationTitle(isRoot ? "lc.tabView.tweaks".loc : baseUrl.lastPathComponent)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if !isTweakSigning {
+                    Menu {
+                        Button {
+                            choosingTweak = true
+                        } label: {
+                            Label("lc.tweakView.importTweak".loc, systemImage: "puzzlepiece.extension")
+                        }
+                    } label: {
+                        Label("lc.tweakView.importTweak".loc, systemImage: "puzzlepiece.extension")
+                    } primaryAction: {
+                        choosingTweak = true
+                    }
+                } else {
+                    ProgressView().progressViewStyle(.circular)
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
-                if hasCertificate {
+                if !isTweakSigning {
+                    Menu {
+                        Button {
+                            Task { await createNewFolder() }
+                        } label: {
+                            Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
+                        }
+                    } label: {
+                        Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
+                    } primaryAction: {
+                        Task { await createNewFolder() }
+                    }
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if !isTweakSigning && LCSharedUtils.certificatePassword() != nil {
                     Button {
                         Task { await signAllTweaks() }
                     } label: {
-                        Image(systemName: "signature")
+                        Label("sign".loc, systemImage: "signature")
                     }
-                    .disabled(isTweakSigning)
-                    .opacity(isTweakSigning ? 0.35 : 1)
                 }
+
             }
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    choosingTweak = true
-                } label: {
-                    Image(systemName: "puzzlepiece.extension")
-                }
-                .accessibilityLabel("lc.tweakView.importTweak".loc)
-                .disabled(isTweakSigning)
-                .opacity(isTweakSigning ? 0.35 : 1)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await createNewFolder() }
-                } label: {
-                    Image(systemName: "folder.badge.plus")
-                }
-                .accessibilityLabel("lc.tweakView.newFolder".loc)
-                .disabled(isTweakSigning)
-                .opacity(isTweakSigning ? 0.35 : 1)
-            }
-        }
-        .onAppear {
-            hasCertificate = LCSharedUtils.certificatePassword() != nil
         }
         .alert("lc.common.error".loc, isPresented: $errorShow) {
             Button("lc.common.ok".loc, action: {
