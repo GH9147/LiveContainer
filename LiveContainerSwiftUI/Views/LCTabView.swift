@@ -43,17 +43,12 @@ struct LCTabView: View {
             if #available(iOS 19.0, *), SharedModel.isLiquidGlassSearchEnabled {
                 TabView(selection: $sharedModel.selectedTab) {
                     if DataManager.shared.model.multiLCStatus != 2 {
-                        Tab("lc.tabView.sources".loc, systemImage: "books.vertical", value: LCTabIdentifier.sources) {
-                            sourcesView
+                        Tab("lc.tabView.tweaks".loc, systemImage: "wrench.and.screwdriver", value: LCTabIdentifier.tweaks) {
+                            LCTweaksView(tweakFolders: $tweakFolderNames)
                         }
                     }
                     Tab("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill", value: LCTabIdentifier.apps) {
                         appListView
-                    }
-                    if DataManager.shared.model.multiLCStatus != 2 {
-                        Tab("lc.tabView.tweaks".loc, systemImage: "wrench.and.screwdriver", value: LCTabIdentifier.tweaks) {
-                            LCTweaksView(tweakFolders: $tweakFolderNames)
-                        }
                     }
                     Tab("lc.tabView.settings".loc, systemImage: "gearshape.fill", value: LCTabIdentifier.settings) {
                         LCSettingsView(appDataFolderNames: $appDataFolderNames)
@@ -72,24 +67,17 @@ struct LCTabView: View {
             } else {
                 TabView(selection: $sharedModel.selectedTab) {
                     if DataManager.shared.model.multiLCStatus != 2 {
-                        sourcesView
-                            .tabItem {
-                                Label("lc.tabView.sources".loc, systemImage: "books.vertical")
-                            }
-                            .tag(LCTabIdentifier.sources)
-                    }
-                    appListView
-                        .tabItem {
-                            Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill")
-                        }
-                        .tag(LCTabIdentifier.apps)
-                    if DataManager.shared.model.multiLCStatus != 2 {
                         LCTweaksView(tweakFolders: $tweakFolderNames)
                             .tabItem{
                                 Label("lc.tabView.tweaks".loc, systemImage: "wrench.and.screwdriver")
                             }
                             .tag(LCTabIdentifier.tweaks)
                     }
+                    appListView
+                        .tabItem {
+                            Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill")
+                        }
+                        .tag(LCTabIdentifier.apps)
                     
                     LCSettingsView(appDataFolderNames: $appDataFolderNames)
                         .tabItem {

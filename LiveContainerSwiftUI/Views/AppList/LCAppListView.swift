@@ -77,6 +77,8 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
     @State private var helpPresent = false
     
     @State private var customSortViewPresent = false
+    @State private var sourcesPresent = false
+    @StateObject private var sourcesSearchContext = SearchContext()
     
     @EnvironmentObject private var sharedModel : SharedModel
     @EnvironmentObject private var sharedAppSortManager : LCAppSortManager
@@ -220,6 +222,11 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
             .navigationTitle("lc.appList.myApps".loc)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    Button("源", systemImage: "link", action: {
+                        sourcesPresent = true
+                    })
+                }
+                ToolbarItem(placement: .topBarLeading) {
                     if sharedModel.multiLCStatus != 2 {
                         if !installprogressVisible {
                             Menu {
@@ -239,7 +246,7 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                         }
                     }
                 }
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarTrailing) {
                     if(UserDefaults.sideStoreExist()) {
                         Button {
                             LCUtils.openSideStore(delegate: self)
@@ -255,12 +262,6 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
                     }
                     
 
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("lc.appList.openLink".loc, systemImage: "link", action: {
-                        Task { await onOpenWebViewTapped() }
-                    })
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -400,6 +401,9 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
         }
         .sheet(isPresented: $customSortViewPresent) {
             LCCustomSortView()
+        }
+        .sheet(isPresented: $sourcesPresent) {
+            LCSourcesView(searchContext: sourcesSearchContext)
         }
         .onAppear() {
             if !isViewAppeared {

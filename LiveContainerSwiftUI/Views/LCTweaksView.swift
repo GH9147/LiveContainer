@@ -152,34 +152,32 @@ struct LCTweakFolderView : View {
                 }
 
             }
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .topBarLeading) {
                 if !isTweakSigning {
-                    Menu {
-                        Button {
-                            if choosingTweak {
-                                choosingTweak = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                                    choosingTweak = true
-                                })
-                            } else {
+                    Button {
+                        if choosingTweak {
+                            choosingTweak = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
                                 choosingTweak = true
-                            }
-                        } label: {
-                            Label("lc.tweakView.importTweak".loc, systemImage: "square.and.arrow.down")
-                        }
-                        
-                        Button {
-                            Task { await createNewFolder() }
-                        } label: {
-                            Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
+                            })
+                        } else {
+                            choosingTweak = true
                         }
                     } label: {
-                        Label("add", systemImage: "plus")
+                        Label("lc.tweakView.importTweak".loc, systemImage: "puzzlepiece.extension")
                     }
                 } else {
                     ProgressView().progressViewStyle(.circular)
                 }
-
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if !isTweakSigning {
+                    Button {
+                        Task { await createNewFolder() }
+                    } label: {
+                        Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
+                    }
+                }
             }
         }
         .alert("lc.common.error".loc, isPresented: $errorShow) {
