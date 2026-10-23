@@ -153,32 +153,30 @@ struct LCTweakFolderView : View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if !isTweakSigning {
-                    Menu {
-                        Button {
-                            if choosingTweak {
-                                choosingTweak = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                                    choosingTweak = true
-                                })
-                            } else {
-                                choosingTweak = true
-                            }
-                        } label: {
-                            Label("lc.tweakView.importTweak".loc, systemImage: "square.and.arrow.down")
-                        }
-                        
-                        Button {
-                            Task { await createNewFolder() }
-                        } label: {
-                            Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
-                        }
+                    Button {
+                        Task { await createNewFolder() }
                     } label: {
-                        Label("add", systemImage: "plus")
+                        Label("lc.tweakView.newFolder".loc, systemImage: "folder.badge.plus")
                     }
                 } else {
                     ProgressView().progressViewStyle(.circular)
                 }
-
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if !isTweakSigning {
+                    Button {
+                        if choosingTweak {
+                            choosingTweak = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+                                choosingTweak = true
+                            })
+                        } else {
+                            choosingTweak = true
+                        }
+                    } label: {
+                        Label("lc.tweakView.importTweak".loc, systemImage: "square.and.arrow.down")
+                    }
+                }
             }
         }
         .alert("lc.common.error".loc, isPresented: $errorShow) {

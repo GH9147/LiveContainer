@@ -215,9 +215,13 @@ struct LCAppListView : View, LCAppBannerDelegate, LCAppModelDelegate {
             .navigationTitle("lc.appList.myApps".loc)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("源", systemImage: "link", action: {
+                    Button {
                         sourcesPresent = true
-                    })
+                    } label: {
+                        Image(systemName: "link")
+                            .font(.system(size: 15, weight: .regular))
+                    }
+                    .accessibilityLabel("源")
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     if sharedModel.multiLCStatus != 2 {
