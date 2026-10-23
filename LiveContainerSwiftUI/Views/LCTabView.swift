@@ -23,13 +23,6 @@ struct LCTabView: View {
     
     var body: some View {
         TabView(selection: $sharedModel.selectedTab) {
-            if DataManager.shared.model.multiLCStatus != 2 {
-                LCSourcesView()
-                    .tabItem {
-                        Label("lc.tabView.sources".loc, systemImage: "books.vertical")
-                    }
-                    .tag(LCTabIdentifier.sources)
-            }
             LCAppListView()
                 .tabItem {
                     Label("lc.tabView.apps".loc, systemImage: "square.stack.3d.up.fill")
@@ -130,12 +123,10 @@ struct LCTabView: View {
             }
             
             switch host {
-            case "livecontainer-launch", "install", "open-web-page", "open-url":
+            case "livecontainer-launch", "install", "open-web-page", "open-url", "source":
                 sharedModel.selectedTab = .apps
             case "certificate":
                 sharedModel.selectedTab = .settings
-            case "source":
-                sharedModel.selectedTab = .sources
             default:
                 return
             }
